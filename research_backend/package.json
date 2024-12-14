@@ -14,7 +14,11 @@
     "typescript": "^5.7.2"
   },
   "dependencies": {
+    "@types/express": "^5.0.0",
+    "@types/zeromq": "^5.2.5",
+    "body-parser": "^1.20.3",
     "dotenv": "^16.4.7",
+    "express": "^4.21.2",
     "node-seal": "^5.1.4",
     "paillier-bigint": "^3.4.3",
     "zeromq": "^6.1.2"
