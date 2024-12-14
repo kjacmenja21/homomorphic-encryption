@@ -1,38 +1,15 @@
-import "dotenv/config";
-import * as paillierBigint from "paillier-bigint";
+import * as dotenv from "dotenv";
+import * as fs from "fs/promises";
+import { PaillierService } from "./services/paillierService";
 
-function testDotEnv() {
-  console.log("ZEROMQ_PORT", process.env.ZEROMQ_PORT);
-  console.log("RSA_PUBLIC_KEY", process.env.RSA_PUBLIC_KEY);
-  console.log("RSA_PRIVATE_KEY", process.env.RSA_PRIVATE_KEY);
+async function main() {
+  let env = await fs.readFile("./secret/secret.env", "utf8");
+  let config = dotenv.parse(env);
+
+  let pService = new PaillierService();
+
+  let publicKey = pService.decodePublicKey(config["PAILLIER_PUBLIC_KEY"]);
+  let privateKey = pService.decodePrivateKey(config["PAILLIER_PRIVATE_KEY"], publicKey);
 }
 
-async function paillierTest() {
-  // (asynchronous) creation of a random private, public key pair for the Paillier cryptosystem
-  const { publicKey, privateKey } = await paillierBigint.generateRandomKeys(
-    3072
-  );
-
-  // Optionally, you can create your public/private keys from known parameters
-  // const publicKey = new paillierBigint.PublicKey(n, g)
-  // const privateKey = new paillierBigint.PrivateKey(lambda, mu, publicKey)
-
-  const m1 = 12345678901234567890n;
-  const m2 = 5n;
-
-  // encryption/decryption
-  const c1 = publicKey.encrypt(m1);
-  console.log(privateKey.decrypt(c1)); // 12345678901234567890n
-
-  // homomorphic addition of two ciphertexts (encrypted numbers)
-  const c2 = publicKey.encrypt(m2);
-  const encryptedSum = publicKey.addition(c1, c2);
-  console.log(privateKey.decrypt(encryptedSum)); // m1 + m2 = 12345678901234567895n
-
-  // multiplication by k
-  const k = 10n;
-  const encryptedMul = publicKey.multiply(c1, k);
-  console.log(privateKey.decrypt(encryptedMul)); // k · m1 = 123456789012345678900n
-}
-testDotEnv();
-paillierTest();
+main();
