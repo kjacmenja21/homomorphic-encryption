@@ -1,8 +1,17 @@
+import "dotenv/config";
 import * as paillierBigint from "paillier-bigint";
+
+function testDotEnv() {
+  console.log("ZEROMQ_PORT", process.env.ZEROMQ_PORT);
+  console.log("RSA_PUBLIC_KEY", process.env.RSA_PUBLIC_KEY);
+  console.log("RSA_PRIVATE_KEY", process.env.RSA_PRIVATE_KEY);
+}
 
 async function paillierTest() {
   // (asynchronous) creation of a random private, public key pair for the Paillier cryptosystem
-  const { publicKey, privateKey } = await paillierBigint.generateRandomKeys(3072);
+  const { publicKey, privateKey } = await paillierBigint.generateRandomKeys(
+    3072
+  );
 
   // Optionally, you can create your public/private keys from known parameters
   // const publicKey = new paillierBigint.PublicKey(n, g)
@@ -25,4 +34,5 @@ async function paillierTest() {
   const encryptedMul = publicKey.multiply(c1, k);
   console.log(privateKey.decrypt(encryptedMul)); // k · m1 = 123456789012345678900n
 }
+testDotEnv();
 paillierTest();
