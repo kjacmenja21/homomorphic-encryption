@@ -2,7 +2,9 @@
   "name": "research_backend",
   "version": "1.0.0",
   "main": "main.ts",
-  "scripts": {},
+  "scripts": {
+    "start": "ts-node src/main.ts"
+  },
   "keywords": [],
   "author": "",
   "license": "MIT",
