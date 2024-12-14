@@ -1,3 +1,7 @@
+
+database/database.sqlite3
+secret/secret.env
+
 # Logs
 logs
 *.log
