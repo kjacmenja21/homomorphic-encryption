@@ -17,6 +17,7 @@
     "dotenv": "^16.4.7",
     "node-seal": "^5.1.4",
     "paillier-bigint": "^3.4.3",
+    "sqlite3": "^5.1.7",
     "zeromq": "^6.1.2"
   }
 }
