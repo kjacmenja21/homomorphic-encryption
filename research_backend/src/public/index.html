@@ -94,8 +94,12 @@
       const HOST = __HOST__;
       const PORT = __PORT__;
 
+      const WEBSOCKET = `ws://${HOST}:${PORT}`;
+
+      console.log(WEBSOCKET);
+
       // WebSocket setup
-      const socket = new WebSocket(`ws://\${HOST}:\${PORT}`);
+      const socket = new WebSocket(WEBSOCKET);
       const outputDiv = document.getElementById("output");
       const inputField = document.getElementById("input");
 
@@ -122,7 +126,7 @@
       });
 
       socket.addEventListener("error", (error) => {
-        appendMessage(`[Error: \${error.message}]`);
+        appendMessage(`[Error: ${error.message}]`);
       });
 
       // Handle user input
@@ -130,7 +134,7 @@
         if (event.key === "Enter") {
           const command = inputField.value.trim();
           if (command) {
-            appendMessage(`> \${command}`); // Show the user input
+            appendMessage(`> ${command}`); // Show the user input
             socket.send(command); // Send command to WebSocket server
             inputField.value = ""; // Clear input field
           }
