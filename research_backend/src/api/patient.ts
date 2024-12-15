@@ -6,6 +6,8 @@ export const patientRouter = express.Router();
 
 patientRouter.post("/data", (req: Request, res: Response) => {
   const data = req.body;
-  mqttSendMessage("Sending message!");
+  console.log(data);
+
+  mqttSendMessage(JSON.stringify(data));
   res.json({ message: "Data received!", data });
 });

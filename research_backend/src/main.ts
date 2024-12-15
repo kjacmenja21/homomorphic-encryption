@@ -7,6 +7,7 @@ const app = express();
 const HOST = process.env.HOST;
 const PORT = process.env.PORT;
 
+app.use(express.json());
 app.use(express.static("src/public"));
 app.use("/api", patientRouter);
 
