@@ -1,13 +1,14 @@
 const express = require("express");
 import "dotenv/config";
-import { runClient } from "./zeromq/client";
+import { patientRouter } from "./api/patient";
 
 const app = express();
 
 const HOST = process.env.HOST;
 const PORT = process.env.PORT;
 
-runClient("Gay");
+app.use(express.static("src/public"));
+app.use("/api", patientRouter);
 
 app.listen(PORT, () => {
   console.log(`Server running on ${HOST}:${PORT}`);

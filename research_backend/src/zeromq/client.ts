@@ -3,7 +3,7 @@ import { Request } from "zeromq";
 const ZEROMQ_PORT = process.env.ZEROMQ_PORT;
 const ZEROMQ_HOST = process.env.ZEROMQ_HOST;
 
-export async function runClient(message: string) {
+export async function mqttSendMessage(message: string) {
   const client = new Request();
 
   try {
