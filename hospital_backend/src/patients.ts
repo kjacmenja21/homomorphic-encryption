@@ -50,7 +50,13 @@ async function list() {
   }
 }
 
-//insert("10000", "Bruno", "Brunić", "2000-01-01", 100, 200);
-//insert("20000", "Maja", "Majić", "2000-01-01", 110, 210);
+async function main() {
+  await insert("10100", "Bruno", "Brunić", "2000-01-01", 100, 200);
+  await insert("10200", "Maja", "Majić", "2000-01-01", 110, 210);
+  await insert("10300", "Tanja", "Tanjić", "2000-01-01", 120, 220);
+  await insert("10400", "Zoran", "Zorić", "2000-01-01", 130, 230);
 
-list();
+  await list();
+}
+
+main();

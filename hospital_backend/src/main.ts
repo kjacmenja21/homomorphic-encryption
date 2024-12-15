@@ -1,16 +1,23 @@
-import "dotenv/config";
-const zmq = require("zeromq");
+import * as zmq from "zeromq";
+import { Config } from "./models/config";
 
-async function run() {
-  const sock = new zmq.Reply();
+async function main() {
+  let config = await Config.load();
+  let socket = new zmq.Reply();
 
-  await sock.bind("tcp://127.0.0.1:3000");
+  await socket.bind("tcp://localhost:" + config.zmqPort);
 
-  for await (const [msg] of sock) {
-    console.log("Recieved", msg);
+  for await (let [msg] of socket) {
+    let data = JSON.parse(msg.toString());
+    await handleRequest(data);
 
-    await sock.send("Hey!");
+    console.log(typeof msg);
+    console.log(msg.toString());
+
+    await socket.send("Hi");
   }
 }
 
-run();
+async function handleRequest(request: any) {}
+
+main();
