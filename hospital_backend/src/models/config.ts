@@ -2,7 +2,6 @@ import * as p from "paillier-bigint";
 import * as dotenv from "dotenv";
 import * as fs from "fs/promises";
 import { PaillierService } from "../services/paillierService";
-import { SealService } from "../services/sealService";
 
 export interface KeyPair<PUBLIC, PRIVATE> {
   publicKey: PUBLIC;
