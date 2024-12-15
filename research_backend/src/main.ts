@@ -12,7 +12,7 @@ var config = new Config();
 
 const app = express();
 const wss = setupWebSocketServer(config);
-const zmqClient = setupZeroMQClient(config);
+const zmqClient = (async () => await setupZeroMQClient(config))();
 
 app.use(express.json());
 app.use("/", apiRouter);
