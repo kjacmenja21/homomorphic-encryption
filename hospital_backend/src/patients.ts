@@ -1,3 +1,4 @@
+/*
 import { PatientService } from "./services/patientService";
 import * as dotenv from "dotenv";
 import * as fs from "fs/promises";
@@ -61,3 +62,4 @@ async function main() {
 }
 
 main();
+*/
