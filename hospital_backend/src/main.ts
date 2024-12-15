@@ -1,15 +1,14 @@
-import * as zmq from "zeromq";
 import { Config } from "./models/config";
-import { PaillierExample } from "./zeromq/paillierExample";
 import * as express from "express";
 import { PatientService } from "./services/patientService";
 import { HealthData } from "./models/healthData";
 import { SealService } from "./services/sealService";
+import { ZeromqServer } from "./services/zeromqServer";
 
 let sealService: SealService;
-let paillierExample: PaillierExample;
 let patientService: PatientService;
 let config: Config;
+let zeromqServer: ZeromqServer;
 
 async function main() {
   config = await Config.load();
@@ -20,32 +19,11 @@ async function main() {
   sealService.initHelpers();
 
   patientService = new PatientService(config, sealService);
-  paillierExample = new PaillierExample(patientService);
 
-  startZeromq();
+  zeromqServer = new ZeromqServer(config, patientService);
+  zeromqServer.start();
+
   startHttp();
-}
-
-async function startZeromq() {
-  let socket = new zmq.Reply();
-
-  await socket.bind("tcp://localhost:" + config.zmqPort);
-
-  for await (let [msg] of socket) {
-    let data = JSON.parse(msg.toString());
-
-    await handleZeromqRequest(socket, data);
-  }
-}
-
-async function handleZeromqRequest(socket: zmq.Reply, data: any) {
-  let type = data.type;
-
-  switch (type) {
-    case "get-patients-data-paillier":
-      await paillierExample.getPatientsData(socket);
-      break;
-  }
 }
 
 async function startHttp() {
