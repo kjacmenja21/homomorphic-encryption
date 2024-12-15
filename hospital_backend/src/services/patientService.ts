@@ -25,11 +25,12 @@ export class PatientService {
     db.open();
 
     let sql = "INSERT INTO Patients";
-    sql += " (oib, firstName, lastName, birthDate, healthData)";
-    sql += " VALUES ($oib, $firstName, $lastName, $birthDate, $healthData);";
+    sql += " (oib, aid, firstName, lastName, birthDate, healthData)";
+    sql += " VALUES ($oib, $aid, $firstName, $lastName, $birthDate, $healthData);";
 
     await db.run(sql, {
       $oib: patient.oib,
+      $aid: patient.aid,
       $firstName: patient.firstName,
       $lastName: patient.lastName,
       $birthDate: patient.birthDate,

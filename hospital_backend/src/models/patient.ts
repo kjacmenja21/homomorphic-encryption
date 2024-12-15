@@ -1,5 +1,6 @@
 export class Patient {
   id: number;
+  aid: number;
 
   oib: string;
   firstName: string;
