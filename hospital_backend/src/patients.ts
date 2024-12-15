@@ -23,6 +23,7 @@ async function insert(oib: string, firstName: string, lastName: string, birthDat
 
   await patientService.insertPatient({
     id: 0,
+    aid: Math.floor(Math.random() * 10000),
     oib,
     firstName,
     lastName,

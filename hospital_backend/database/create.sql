@@ -1,6 +1,7 @@
 
 CREATE TABLE "Patients" (
   "id"	INTEGER NOT NULL UNIQUE,
+  "aid" INTEGER NOT NULL,
 	"oib"	TEXT NOT NULL,
 	"firstName"	TEXT NOT NULL,
 	"lastName"	TEXT NOT NULL,
