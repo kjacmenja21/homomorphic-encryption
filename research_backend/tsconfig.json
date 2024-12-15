@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "esModuleInterop": true, // Enable default imports from CommonJS modules
     "module": "commonjs",
     "declaration": true,
     "removeComments": true,
