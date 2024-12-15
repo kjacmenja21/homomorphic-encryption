@@ -7,11 +7,11 @@ const HOST = process.env.HOST;
 const PORT = process.env.PORT;
 
 const app = express();
+const wss = setupWebSocketServer();
 
 app.use(express.json());
 app.use("/", apiRouter);
 
-setupWebSocketServer();
 app.listen(PORT, () => {
   console.log(`Server running on http://${HOST}:${PORT}`);
 });

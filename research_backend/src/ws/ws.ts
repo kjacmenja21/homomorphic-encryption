@@ -28,4 +28,5 @@ export function setupWebSocketServer() {
   });
 
   console.log("WebSocket server running on ws://localhost:5001");
+  return wss;
 }
