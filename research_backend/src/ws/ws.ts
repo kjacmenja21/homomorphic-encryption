@@ -1,19 +1,20 @@
+import { Config } from "src/models/config";
 import WebSocket, { WebSocketServer } from "ws";
 
 // This function sets up the WebSocket server
-export function setupWebSocketServer() {
+export function setupWebSocketServer(config: Config) {
   const wss = new WebSocketServer({ port: parseInt(process.env.WS_PORT) });
 
   wss.on("connection", (ws: WebSocket) => {
     console.log("Client connected");
 
     // Send a welcome message to the client
-    ws.send("Hello Client!");
+    ws.send("Connection established. Use `commands` to see comannds");
 
     // Handle incoming messages
     ws.on("message", (message: WebSocket.Data) => {
       console.log(`Received message: ${message}`);
-      handleCommand(message.toString(), ws);
+      handleCommand(message.toString(), ws, config);
     });
 
     // Handle disconnection
@@ -31,7 +32,7 @@ export function setupWebSocketServer() {
   return wss;
 }
 
-function handleCommand(message: string, ws: WebSocket) {
+function handleCommand(message: string, ws: WebSocket, config: Config) {
   // Split the message into command and parameters
   const parts = message.split(" ");
 
@@ -40,40 +41,27 @@ function handleCommand(message: string, ws: WebSocket) {
 
   // Handle different commands
   switch (command) {
-    case "send_message":
+    case "commands":
+      const commands = [
+        "send_message <param1> <param2>...",
+        "request_interval <seconds>",
+      ];
       // Example: send_message <message>
-      sendMessage(params.join(" "), ws);
+      sendMessage(commands.map((str) => `"${str}"`).join(" "), ws);
       break;
 
-    case "add":
-      // Example: add <num1> <num2>
-      if (params.length === 2) {
-        const num1 = parseFloat(params[0]);
-        const num2 = parseFloat(params[1]);
-        if (!isNaN(num1) && !isNaN(num2)) {
-          const result = num1 + num2;
-          ws.send(`Result: ${result}`);
+    case "request_interval":
+      // Example: request_interval <seconds>
+      if (params.length === 1) {
+        const value = parseFloat(params[0]);
+        if (!isNaN(value)) {
+          config.request_interval_seconds = value;
+          ws.send(
+            `Request interval set to: ${config.request_interval_seconds}`
+          );
         } else {
-          ws.send("Invalid numbers for addition.");
+          ws.send("Invalid number for value.");
         }
-      } else {
-        ws.send("Invalid number of parameters for add command.");
-      }
-      break;
-
-    case "subtract":
-      // Example: subtract <num1> <num2>
-      if (params.length === 2) {
-        const num1 = parseFloat(params[0]);
-        const num2 = parseFloat(params[1]);
-        if (!isNaN(num1) && !isNaN(num2)) {
-          const result = num1 - num2;
-          ws.send(`Result: ${result}`);
-        } else {
-          ws.send("Invalid numbers for subtraction.");
-        }
-      } else {
-        ws.send("Invalid number of parameters for subtract command.");
       }
       break;
 
@@ -84,6 +72,5 @@ function handleCommand(message: string, ws: WebSocket) {
 }
 
 function sendMessage(message: string, ws: WebSocket) {
-  // Send a custom message to the client
-  ws.send(`Server says: ${message}`);
+  ws.send(`[Server]: ${message}`);
 }
