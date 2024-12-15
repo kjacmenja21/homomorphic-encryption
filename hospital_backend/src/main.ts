@@ -4,14 +4,22 @@ import { PaillierExample } from "./zeromq/paillierExample";
 import * as express from "express";
 import { PatientService } from "./services/patientService";
 import { HealthData } from "./models/healthData";
+import { SealService } from "./services/sealService";
 
+let sealService: SealService;
 let paillierExample: PaillierExample;
 let patientService: PatientService;
 let config: Config;
 
 async function main() {
   config = await Config.load();
-  patientService = new PatientService(config);
+
+  sealService = new SealService();
+  await sealService.init();
+  sealService.decodeKeys(config.sealKeys.publicKey, config.sealKeys.privateKey);
+  sealService.initHelpers();
+
+  patientService = new PatientService(config, sealService);
   paillierExample = new PaillierExample(patientService);
 
   startZeromq();

@@ -1,4 +1,5 @@
 import * as p from "paillier-bigint";
+import { SealService } from "src/services/sealService";
 
 export class HealthData {
   cholesterol: number;
@@ -11,6 +12,18 @@ export class HealthData {
     let result = new EncryptedHealthDataPaillier();
     result.cholesterol = cholesterol;
     result.bloodPressure = bloodPressure;
+
+    return result;
+  }
+
+  encryptSeal(sealService: SealService) {
+    let array = Int32Array.from([this.cholesterol, this.bloodPressure]);
+
+    let plainText = sealService.encoder.encode(array);
+    let cipherText = sealService.encryptor.encrypt(plainText);
+
+    let result = new EncryptedHealthDataSeal();
+    result.cipherText = cipherText;
 
     return result;
   }
@@ -52,24 +65,29 @@ export class EncryptedHealthDataPaillier {
 }
 
 export class EncryptedHealthDataSeal {
-  cholesterol: bigint;
-  bloodPressure: bigint;
+  cipherText: any;
 
-  toJson() {
-    let data = {
-      cholesterol: this.cholesterol.toString(),
-      bloodPressure: this.bloodPressure.toString(),
-    };
+  decrypt(sealService: SealService) {
+    let decryptedPlainText = sealService.decryptor.decrypt(this.cipherText);
+    let decodedArray = sealService.encoder.decode(decryptedPlainText);
 
-    return JSON.stringify(data);
+    let result = new HealthData();
+    result.cholesterol = decodedArray[0];
+    result.bloodPressure = decodedArray[1];
+
+    return result;
   }
 
-  static fromJson(json: string) {
-    let data = JSON.parse(json);
+  save() {
+    return this.cipherText.save();
+  }
+
+  static load(data: string, sealService: SealService) {
+    let cipherText = sealService.createCipherText();
+    cipherText.load(sealService.context, data);
 
     let hpData = new EncryptedHealthDataSeal();
-    hpData.cholesterol = BigInt(data.cholesterol);
-    hpData.bloodPressure = BigInt(data.bloodPressure);
+    hpData.cipherText = cipherText;
 
     return hpData;
   }

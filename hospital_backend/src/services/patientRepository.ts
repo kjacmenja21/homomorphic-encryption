@@ -2,8 +2,15 @@ import { Patient } from "../models/patient";
 import { EncryptedHealthDataPaillier, EncryptedHealthDataSeal } from "../models/healthData";
 
 import { DatabaseConnection } from "./databaseConnection";
+import { SealService } from "./sealService";
 
 export class PatientRepository {
+  private sealService: SealService;
+
+  constructor(sealService: SealService) {
+    this.sealService = sealService;
+  }
+
   async getPatients(): Promise<Patient[]> {
     let db = new DatabaseConnection();
     db.open();
@@ -23,7 +30,7 @@ export class PatientRepository {
       let hpSeal = e.healthDataSeal;
 
       e.healthDataPaillier = EncryptedHealthDataPaillier.fromJson(hpPaillier);
-      e.healthDataSeal = EncryptedHealthDataSeal.fromJson(hpSeal);
+      e.healthDataSeal = EncryptedHealthDataSeal.load(hpSeal, this.sealService);
       return e;
     });
 
@@ -41,7 +48,7 @@ export class PatientRepository {
 
     await db.run(sql, {
       $healthDataPaillier: hpPaillier.toJson(),
-      $healthDataSeal: hpSeal.toJson(),
+      $healthDataSeal: hpSeal.save(),
       $oib: oib,
     });
 
