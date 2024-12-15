@@ -1,15 +1,16 @@
-import * as dotenv from "dotenv";
-import * as fs from "fs/promises";
-import { PaillierService } from "./services/paillierService";
+import "dotenv/config";
+const zmq = require("zeromq");
 
-async function main() {
-  let env = await fs.readFile("./secret/secret.env", "utf8");
-  let config = dotenv.parse(env);
+async function run() {
+  const sock = new zmq.Reply();
 
-  let pService = new PaillierService();
+  await sock.bind("tcp://127.0.0.1:3000");
 
-  let publicKey = pService.decodePublicKey(config["PAILLIER_PUBLIC_KEY"]);
-  let privateKey = pService.decodePrivateKey(config["PAILLIER_PRIVATE_KEY"], publicKey);
+  for await (const [msg] of sock) {
+    console.log("Recieved", msg);
+
+    await sock.send("Hey!");
+  }
 }
 
-main();
+run();
