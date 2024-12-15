@@ -1,44 +1,55 @@
-import * as zmq from "zeromq";
 import { Config } from "./models/config";
+import * as express from "express";
 import { PatientService } from "./services/patientService";
+import { HealthData } from "./models/healthData";
+import { SealService } from "./services/sealService";
+import { ZeromqServer } from "./services/zeromqServer";
+
+let sealService: SealService;
+let patientService: PatientService;
+let config: Config;
+let zeromqServer: ZeromqServer;
 
 async function main() {
-  let config = await Config.load();
-  let socket = new zmq.Reply();
+  config = await Config.load();
 
-  await socket.bind("tcp://localhost:" + config.zmqPort);
+  sealService = new SealService();
+  await sealService.init();
+  sealService.decodeKeys(config.sealKeys.publicKey, config.sealKeys.privateKey);
+  sealService.initHelpers();
 
-  for await (let [msg] of socket) {
-    let data = JSON.parse(msg.toString());
-    await handleRequest(socket, data);
-  }
+  patientService = new PatientService(config, sealService);
+
+  zeromqServer = new ZeromqServer(config, patientService);
+  zeromqServer.start();
+
+  startHttp();
 }
 
-async function handleRequest(socket: zmq.Reply, data: any) {
-  let type = data.type;
+async function startHttp() {
+  let app = express();
+  app.use(express.json());
 
-  switch (type) {
-    case "get-patients-data-paillier":
-      await getPatientsDataPaillier(socket);
-      break;
-  }
+  app.get("/patients", (req, res) => getAllPatients(req, res));
+  app.put("/patient_health_data", (req, res) => updatePatientHealthData(req, res));
+
+  app.listen(80);
 }
 
-async function getPatientsDataPaillier(socket: zmq.Reply) {
-  let patientService = new PatientService();
-  let patients = await patientService.getPatients();
+async function getAllPatients(req: express.Request, res: express.Response) {
+  let data = await patientService.getPatientsDecrypted();
+  res.json(data);
+}
 
-  let data = {
-    patients: patients.map((e) => {
-      return {
-        aid: e.aid,
-        cholesterol: e.healthData.cholesterol.toString(),
-        bloodPressure: e.healthData.bloodPressure.toString(),
-      };
-    }),
-  };
+async function updatePatientHealthData(req: express.Request, res: express.Response) {
+  let data = req.body;
 
-  await socket.send(JSON.stringify(data));
+  let hpData = new HealthData();
+  hpData.cholesterol = data.cholesterol;
+  hpData.bloodPressure = data.bloodPressure;
+
+  await patientService.updatePatientHealthData(data.oib, hpData);
+  res.send("OK");
 }
 
 main();

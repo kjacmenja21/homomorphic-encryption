@@ -1,3 +1,5 @@
+import { EncryptedHealthDataPaillier, EncryptedHealthDataSeal, HealthData } from "./healthData";
+
 export class Patient {
   id: number;
   aid: number;
@@ -7,34 +9,32 @@ export class Patient {
   lastName: string;
   birthDate: string;
 
-  healthData: EncryptedHealthData;
+  healthDataPaillier: EncryptedHealthDataPaillier;
+  healthDataSeal: EncryptedHealthDataSeal;
 }
 
-export class EncryptedHealthData {
-  cholesterol: bigint;
-  bloodPressure: bigint;
+export class PatientDecrypted {
+  id: number;
+  aid: number;
 
-  toJson() {
-    let data = {
-      cholesterol: this.cholesterol.toString(),
-      bloodPressure: this.bloodPressure.toString(),
-    };
+  oib: string;
+  firstName: string;
+  lastName: string;
+  birthDate: string;
 
-    return JSON.stringify(data);
+  healthDataPaillier: HealthData;
+  healthDataSeal: HealthData;
+
+  constructor(patient: Patient, hpPaillier: HealthData, hpSeal: HealthData) {
+    this.id = patient.id;
+    this.aid = patient.aid;
+    this.oib = patient.oib;
+
+    this.firstName = patient.firstName;
+    this.lastName = patient.lastName;
+    this.birthDate = patient.birthDate;
+
+    this.healthDataPaillier = hpPaillier;
+    this.healthDataSeal = hpSeal;
   }
-
-  static fromJson(json: string) {
-    let data = JSON.parse(json);
-
-    let hpData = new EncryptedHealthData();
-    hpData.cholesterol = BigInt(data.cholesterol);
-    hpData.bloodPressure = BigInt(data.bloodPressure);
-
-    return hpData;
-  }
-}
-
-export class HealthData {
-  cholesterol: number;
-  bloodPressure: number;
 }
