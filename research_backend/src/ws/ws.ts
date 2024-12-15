@@ -1,25 +1,31 @@
-// websocket.ts
-import http from "http";
-import { Server } from "socket.io";
+import WebSocket, { WebSocketServer } from "ws";
 
-export function setupWebSocketServer(server: http.Server) {
-  const io = new Server(server);
-  console.log("Created new WS server");
+// This function sets up the WebSocket server
+export function setupWebSocketServer() {
+  const wss = new WebSocketServer({ port: parseInt(process.env.WS_PORT) });
 
-  io.on("connection", (socket) => {
-    console.log("New WebSocket connection");
+  wss.on("connection", (ws: WebSocket) => {
+    console.log("Client connected");
 
-    // Listen for messages from the client
-    socket.on("message", (message) => {
-      console.log(`Received: ${message}`);
-      socket.send(`Server says: ${message}`); // Echo the message back to the client
+    // Send a welcome message to the client
+    ws.send("Hello Client!");
+
+    // Handle incoming messages
+    ws.on("message", (message: WebSocket.Data) => {
+      console.log(`Received message: ${message}`);
+      ws.send(`Server received: ${message}`); // Echo the message back
     });
 
     // Handle disconnection
-    socket.on("disconnect", () => {
-      console.log("WebSocket connection closed");
+    ws.on("close", () => {
+      console.log("Client disconnected");
+    });
+
+    // Handle WebSocket errors
+    ws.on("error", (error: Error) => {
+      console.error("Error on WebSocket connection:", error.message);
     });
   });
 
-  return io; // Optional: Return the io instance if you need to interact with it outside
+  console.log("WebSocket server running on ws://localhost:5001");
 }

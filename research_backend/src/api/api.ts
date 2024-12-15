@@ -8,7 +8,7 @@ export const apiRouter = express.Router();
 apiRouter.get("/", (req: Request, res: Response) => {
   const filePath = path.join(__dirname, "../public/index.html");
   const HOST = process.env.HOST || "localhost";
-  const PORT = process.env.PORT || "8080";
+  const PORT = process.env.WS_PORT || "8080";
 
   fs.readFile(
     filePath,
