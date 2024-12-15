@@ -7,7 +7,7 @@ import { SealService } from "./sealService";
 export class PatientService {
   private config: Config;
   private patientRepo: PatientRepository;
-  private sealService: SealService;
+  sealService: SealService;
 
   constructor(config: Config, sealService: SealService) {
     this.config = config;

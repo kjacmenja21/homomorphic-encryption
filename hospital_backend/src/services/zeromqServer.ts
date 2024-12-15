@@ -31,7 +31,7 @@ export class ZeromqServer {
         await this.getPatientsDataPaillier(socket);
         break;
       case "get-patients-data-seal":
-        await this.getPatientsDataPaillier(socket);
+        await this.getPatientsDataSeal(socket);
         break;
     }
   }
@@ -39,7 +39,14 @@ export class ZeromqServer {
   async getPatientsDataPaillier(socket: zmq.Reply) {
     let patients = await this.patientService.getAllPatients();
 
+    let publicKey = this.config.paillierKeys.publicKey;
+
     let data = {
+      publicKey: {
+        n: publicKey.n.toString(),
+        g: publicKey.g.toString(),
+      },
+
       patients: patients.map((patient) => {
         let hpData = patient.healthDataPaillier;
 
@@ -57,7 +64,11 @@ export class ZeromqServer {
   async getPatientsDataSeal(socket: zmq.Reply) {
     let patients = await this.patientService.getAllPatients();
 
+    let sealService = this.patientService.sealService;
+
     let data = {
+      publicKey: sealService.encodePublicKey(),
+
       patients: patients.map((patient) => {
         let hpData = patient.healthDataSeal;
 
