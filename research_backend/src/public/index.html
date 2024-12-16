@@ -137,36 +137,47 @@
           appendMessage(event.data);
         });
 
-        socket.addEventListener("close", () => {
+        socket.addEventListener("close", async () => {
           appendMessage("[Disconnected from server]");
-          retryConnection(); // Try reconnecting
+          await retryConnection(); // Try reconnecting
         });
 
-        socket.addEventListener("error", (error) => {
+        socket.addEventListener("error", async (error) => {
           appendMessage(`[Error: ${error.message}]`);
-          retryConnection(); // Try reconnecting
+          await retryConnection(); // Try reconnecting
         });
       }
 
-      // Retry connection logic
-      function retryConnection() {
+      let retryTimeout = null; // Variable to track timeout and prevent repeated retries
+
+      async function retryConnection() {
+        // Only retry if there isn't already a retry timeout in progress
+        if (retryTimeout) {
+          return; // Prevent multiple retries at once
+        }
+
         if (retries < MAX_INITIAL_RETRIES) {
           retries++;
-          setTimeout(connect, retryDelay);
           appendMessage(
             `[Retrying in ${Math.floor(
               retryDelay / 1000
             )} seconds (attempt ${retries})]`
-          );
+          ); // Display retry message before timeout
+          retryTimeout = setTimeout(() => {
+            connect(); // Retry the connection
+            retryTimeout = null; // Reset the retry timeout flag after the attempt
+          }, retryDelay);
         } else {
           retryDelay += 60000; // Increment retry delay by 1 minute
-          setTimeout(connect, retryDelay);
           appendMessage(
             `[Retrying in ${Math.floor(retryDelay / 60000)} minutes]`
-          );
+          ); // Display retry message before timeout
+          retryTimeout = setTimeout(() => {
+            connect(); // Retry the connection
+            retryTimeout = null; // Reset the retry timeout flag after the attempt
+          }, retryDelay);
         }
       }
-
       // Handle user input
       inputField.addEventListener("keydown", (event) => {
         if (event.key === "Enter") {
