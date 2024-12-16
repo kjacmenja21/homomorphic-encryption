@@ -59,10 +59,11 @@ class ZeroMQClient {
     if (!this.isRunning) return;
 
     try {
+      this.storage.push("Sending request to server...");
       const result = await this.send(
         JSON.stringify({ type: this.config.request_type })
       );
-      this.handleRecieves(result);
+      this.handleReceives(result);
     } catch (err) {
       console.error("Error sending request:", err);
     }
@@ -71,8 +72,9 @@ class ZeroMQClient {
     setTimeout(this.scheduleRequests, intervalMs);
   };
 
-  handleRecieves = (result: Message) => {
-    console.log(result.toJSON().type);
-    this.storage.push("Digest");
+  handleReceives = (result: Message) => {
+    const resultString = result.toString();
+    console.log(`Received result from server`);
+    this.storage.push(resultString);
   };
 }

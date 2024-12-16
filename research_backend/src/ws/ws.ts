@@ -28,10 +28,16 @@ export function setupWebSocketServer(config: Config, storage: string[]) {
     });
   });
 
+  // Broadcast messages to all connected clients
   const broadcast = (data: string) => {
+    // Generate a timestamp in [YYYY-MM-DD HH:mm:ss] format
+    const timestamp = new Date().toISOString().replace("T", " ").split(".")[0];
+    const messageWithTimestamp = `[${timestamp}] ${data}`;
+
+    // Send the message to all connected clients
     wss.clients.forEach((client) => {
       if (client.readyState === client.OPEN) {
-        client.send(data);
+        client.send(messageWithTimestamp);
       }
     });
   };
