@@ -90,44 +90,74 @@
     </div>
 
     <script>
-      // Injected host and port
       const HOST = __HOST__;
       const PORT = __PORT__;
 
       const WEBSOCKET = `ws://${HOST}:${PORT}`;
-
-      console.log(WEBSOCKET);
-
-      // WebSocket setup
-      const socket = new WebSocket(WEBSOCKET);
       const outputDiv = document.getElementById("output");
       const inputField = document.getElementById("input");
 
-      // Add message to terminal output
+      let socket = null;
+      let retryDelay = 5000; // Start with 5 seconds
+      let retries = 0;
+      const MAX_INITIAL_RETRIES = 5;
+
+      // Add message to terminal output with truncation
       function appendMessage(message) {
+        const MAX_LENGTH = 100; // Adjust as needed for your terminal width
+        const truncatedMessage =
+          message.length > MAX_LENGTH
+            ? message.substring(0, MAX_LENGTH - 3) + "..."
+            : message;
+
         const line = document.createElement("div");
         line.className = "line";
-        line.textContent = message;
+        line.textContent = truncatedMessage;
         outputDiv.appendChild(line);
         outputDiv.scrollTop = outputDiv.scrollHeight; // Scroll to bottom
       }
 
-      // WebSocket events
-      socket.addEventListener("open", () => {
-        appendMessage("[Connected to server]");
-      });
+      // Connect to WebSocket
+      function connect() {
+        appendMessage(`[Attempting to connect to ${WEBSOCKET}]`);
 
-      socket.addEventListener("message", (event) => {
-        appendMessage(event.data);
-      });
+        socket = new WebSocket(WEBSOCKET);
 
-      socket.addEventListener("close", () => {
-        appendMessage("[Disconnected from server]");
-      });
+        socket.addEventListener("open", () => {
+          appendMessage("[Connected to server]");
+          retries = 0; // Reset retries on successful connection
+          retryDelay = 5000; // Reset retry delay
+        });
 
-      socket.addEventListener("error", (error) => {
-        appendMessage(`[Error: ${error.message}]`);
-      });
+        socket.addEventListener("message", (event) => {
+          appendMessage(event.data);
+        });
+
+        socket.addEventListener("close", () => {
+          appendMessage("[Disconnected from server]");
+          retryConnection(); // Try reconnecting
+        });
+
+        socket.addEventListener("error", (error) => {
+          appendMessage(`[Error: ${error.message}]`);
+          retryConnection(); // Try reconnecting
+        });
+      }
+
+      // Retry connection logic
+      function retryConnection() {
+        if (retries < MAX_INITIAL_RETRIES) {
+          retries++;
+          setTimeout(connect, retryDelay);
+          appendMessage(
+            `[Retrying in ${retryDelay / 1000} seconds (attempt ${retries})]`
+          );
+        } else {
+          retryDelay += 60000; // Increment retry delay by 1 minute
+          setTimeout(connect, retryDelay);
+          appendMessage(`[Retrying in ${retryDelay / 60000} minutes]`);
+        }
+      }
 
       // Handle user input
       inputField.addEventListener("keydown", (event) => {
@@ -135,11 +165,18 @@
           const command = inputField.value.trim();
           if (command) {
             appendMessage(`> ${command}`); // Show the user input
-            socket.send(command); // Send command to WebSocket server
+            if (socket.readyState === WebSocket.OPEN) {
+              socket.send(command); // Send command to WebSocket server
+            } else {
+              appendMessage("[Error: Cannot send command, not connected]");
+            }
             inputField.value = ""; // Clear input field
           }
         }
       });
+
+      // Start WebSocket connection
+      connect();
     </script>
   </body>
 </html>
