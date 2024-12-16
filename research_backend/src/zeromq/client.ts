@@ -23,11 +23,15 @@ class ZeroMQClient {
   constructor(host: string, port: string, config: Config, storage: string[]) {
     this.url = `tcp://${host}:${port}`;
     this.config = config;
-    this.client = new Request();
     this.paillierService = new PaillierService();
     this.sealService = new SealService();
     this.isRunning = true;
     this.storage = storage;
+    this.client = new Request(); //{
+    //curvePublicKey: process.env.ZEROMQ_RESEARCH_PUBLIC_KEY,
+    //curveServerKey: process.env.ZEROMQ_HOSPITAL_PUBLIC_KEY,
+    //curveSecretKey: process.env.ZEROMQ_RESEARCH_SECRET_KEY,
+    //}
   }
 
   start = async () => {

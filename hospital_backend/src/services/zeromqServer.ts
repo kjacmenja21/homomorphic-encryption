@@ -13,7 +13,16 @@ export class ZeromqServer {
   }
 
   async start() {
-    this.socket = new zmq.Reply();
+    // https://github.com/zeromq/zeromq.js/issues/640
+    this.socket = new zmq.Reply({
+      //linger: 0,
+      //curvePublicKey: this.config.public_key,
+      //curveSecretKey: process.env.ZEROMQ_HOSPITAL_PRIVATE_KEY,
+      //curveServer: true,
+    });
+
+    //console.log(this.config.public_key);
+    //this.socket.curvePublicKey = this.config.public_key;
 
     await this.socket.bind("tcp://localhost:" + this.config.zmqPort);
 
@@ -78,7 +87,9 @@ export class ZeromqServer {
 
     let data = {
       patients: patients.map((patient: any) => {
-        let diabetes = this.patientService.decryptDiabetesPaillier(patient.diabetes);
+        let diabetes = this.patientService.decryptDiabetesPaillier(
+          patient.diabetes
+        );
 
         return {
           aid: patient.aid,
@@ -119,7 +130,9 @@ export class ZeromqServer {
 
     let data = {
       patients: patients.map((patient: any) => {
-        let diabetes = this.patientService.decryptDiabetesSeal(patient.diabetes);
+        let diabetes = this.patientService.decryptDiabetesSeal(
+          patient.diabetes
+        );
 
         return {
           aid: patient.aid,
