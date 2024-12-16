@@ -25,9 +25,7 @@ class ZeroMQClient {
         console.log("Client connected to server.");
 
         setInterval(async () => {
-          const result = await this.send(
-            JSON.stringify({ type: this.config.request_type })
-          );
+          const result = await this.send(JSON.stringify({ type: this.config.request_type }));
           this.handleRecieves(result);
         }, this.config.request_interval_seconds * 1000);
       });
@@ -57,6 +55,6 @@ class ZeroMQClient {
   };
 
   handleRecieves = (result: Message) => {
-    console.log(result.toJSON().type);
+    console.log(JSON.parse(result.toString()));
   };
 }
