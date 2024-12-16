@@ -5,6 +5,6 @@ enum RequestType {
 
 export class Config {
   request_interval_seconds: number = 5;
-  request_type: RequestType = RequestType.PAILLIER;
+  request_type: RequestType = RequestType.SEAL;
   pause: boolean = false;
 }

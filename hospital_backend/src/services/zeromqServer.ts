@@ -5,6 +5,7 @@ import { PatientService } from "./patientService";
 export class ZeromqServer {
   private config: Config;
   private patientService: PatientService;
+  private socket: zmq.Reply;
 
   constructor(config: Config, patientService: PatientService) {
     this.config = config;
@@ -12,45 +13,47 @@ export class ZeromqServer {
   }
 
   async start() {
-    let socket = new zmq.Reply();
+    this.socket = new zmq.Reply();
 
-    await socket.bind("tcp://localhost:" + this.config.zmqPort);
+    await this.socket.bind("tcp://localhost:" + this.config.zmqPort);
 
-    for await (let [msg] of socket) {
+    for await (let [msg] of this.socket) {
       let data = JSON.parse(msg.toString());
 
-      await this.handleZeromqRequest(socket, data);
+      await this.handleZeromqRequest(data);
     }
   }
 
-  async handleZeromqRequest(socket: zmq.Reply, data: any) {
+  async handleZeromqRequest(data: any) {
     let type = data.type;
 
     switch (type) {
       case "get-patients-data-paillier":
-        await this.getPatientsDataPaillier(data, socket);
+        await this.getPatientsDataPaillier(data);
         break;
 
       case "decrypt-diabetes-results-paillier":
-        await this.decryptDiabetesResultsPaillier(data, socket);
+        await this.decryptDiabetesResultsPaillier(data);
         break;
 
       case "get-patients-data-seal":
-        await this.getPatientsDataSeal(data, socket);
+        await this.getPatientsDataSeal(data);
         break;
 
       case "decrypt-diabetes-results-seal":
-        await this.decryptDiabetesResultsSeal(data, socket);
+        await this.decryptDiabetesResultsSeal(data);
         break;
     }
   }
 
-  async getPatientsDataPaillier(inputData: any, socket: zmq.Reply) {
+  async getPatientsDataPaillier(inputData: any) {
     let patients = await this.patientService.getAllPatients();
 
     let publicKey = this.config.paillierKeys.publicKey;
 
     let data = {
+      type: "patients-data-paillier",
+
       publicKey: {
         n: publicKey.n.toString(),
         g: publicKey.g.toString(),
@@ -67,10 +70,10 @@ export class ZeromqServer {
       }),
     };
 
-    await socket.send(JSON.stringify(data));
+    await this.socket.send(JSON.stringify(data));
   }
 
-  async decryptDiabetesResultsPaillier(inputData: any, socket: zmq.Reply) {
+  async decryptDiabetesResultsPaillier(inputData: any) {
     let patients = inputData.patients;
 
     let data = {
@@ -84,31 +87,30 @@ export class ZeromqServer {
       }),
     };
 
-    await socket.send(JSON.stringify(data));
+    await this.socket.send(JSON.stringify(data));
   }
 
-  async getPatientsDataSeal(inputData: any, socket: zmq.Reply) {
+  async getPatientsDataSeal(inputData: any) {
     let patients = await this.patientService.getAllPatients();
 
-    let sealService = this.patientService.sealService;
-
     let data = {
-      publicKey: sealService.encodePublicKey(),
+      type: "patients-data-seal",
 
       patients: patients.map((patient) => {
         let hpData = patient.healthDataSeal;
 
         return {
           aid: patient.aid,
-          cipherText: hpData.save(),
+          cholesterol: hpData.cholesterol.save(),
+          bloodPressure: hpData.bloodPressure.save(),
         };
       }),
     };
 
-    await socket.send(JSON.stringify(data));
+    await this.socket.send(JSON.stringify(data));
   }
 
-  async decryptDiabetesResultsSeal(inputData: any, socket: zmq.Reply) {
+  async decryptDiabetesResultsSeal(inputData: any) {
     let patients = inputData.patients;
 
     let data = {
@@ -122,6 +124,6 @@ export class ZeromqServer {
       }),
     };
 
-    await socket.send(JSON.stringify(data));
+    await this.socket.send(JSON.stringify(data));
   }
 }

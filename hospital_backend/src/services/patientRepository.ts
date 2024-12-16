@@ -30,7 +30,7 @@ export class PatientRepository {
       let hpSeal = e.healthDataSeal;
 
       e.healthDataPaillier = EncryptedHealthDataPaillier.fromJson(hpPaillier);
-      e.healthDataSeal = EncryptedHealthDataSeal.load(hpSeal, this.sealService);
+      e.healthDataSeal = EncryptedHealthDataSeal.fromJson(hpSeal, this.sealService);
       return e;
     });
 
@@ -48,7 +48,7 @@ export class PatientRepository {
 
     await db.run(sql, {
       $healthDataPaillier: hpPaillier.toJson(),
-      $healthDataSeal: hpSeal.save(),
+      $healthDataSeal: hpSeal.toJson(),
       $oib: oib,
     });
 
