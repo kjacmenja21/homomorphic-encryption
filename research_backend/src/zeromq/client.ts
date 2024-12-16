@@ -70,6 +70,6 @@ class ZeroMQClient {
   };
 
   handleRecieves = (result: Message) => {
-    console.log(result.toJSON().type);
+    console.log(JSON.parse(result.toString()));
   };
 }
