@@ -42,4 +42,24 @@ export class PatientService {
 
     return new PatientDecrypted(patient, hpPaillier, hpSeal);
   }
+
+  decryptDiabetesPaillier(diabetesText: string) {
+    let diabetesEncrypted = BigInt(diabetesText);
+    let privateKey = this.config.paillierKeys.privateKey;
+
+    let diabetes = privateKey.decrypt(diabetesEncrypted);
+
+    return Number(diabetes);
+  }
+
+  decryptDiabetesSeal(diabetesText: string) {
+    let cipherText = this.sealService.createCipherText();
+    cipherText.load(this.sealService.context, diabetesText);
+
+    let decryptedPlainText = this.sealService.decryptor.decrypt(cipherText);
+    let decodedArray = this.sealService.encoder.decode(decryptedPlainText);
+
+    let diabetes = Number(decodedArray[0]);
+    return diabetes;
+  }
 }

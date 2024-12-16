@@ -28,15 +28,24 @@ export class ZeromqServer {
 
     switch (type) {
       case "get-patients-data-paillier":
-        await this.getPatientsDataPaillier(socket);
+        await this.getPatientsDataPaillier(data, socket);
         break;
+
+      case "decrypt-diabetes-results-paillier":
+        await this.decryptDiabetesResultsPaillier(data, socket);
+        break;
+
       case "get-patients-data-seal":
-        await this.getPatientsDataSeal(socket);
+        await this.getPatientsDataSeal(data, socket);
+        break;
+
+      case "decrypt-diabetes-results-seal":
+        await this.decryptDiabetesResultsSeal(data, socket);
         break;
     }
   }
 
-  async getPatientsDataPaillier(socket: zmq.Reply) {
+  async getPatientsDataPaillier(inputData: any, socket: zmq.Reply) {
     let patients = await this.patientService.getAllPatients();
 
     let publicKey = this.config.paillierKeys.publicKey;
@@ -61,7 +70,24 @@ export class ZeromqServer {
     await socket.send(JSON.stringify(data));
   }
 
-  async getPatientsDataSeal(socket: zmq.Reply) {
+  async decryptDiabetesResultsPaillier(inputData: any, socket: zmq.Reply) {
+    let patients = inputData.patients;
+
+    let data = {
+      patients: patients.map((patient: any) => {
+        let diabetes = this.patientService.decryptDiabetesPaillier(patient.diabetes);
+
+        return {
+          aid: patient.aid,
+          diabetes: diabetes,
+        };
+      }),
+    };
+
+    await socket.send(JSON.stringify(data));
+  }
+
+  async getPatientsDataSeal(inputData: any, socket: zmq.Reply) {
     let patients = await this.patientService.getAllPatients();
 
     let sealService = this.patientService.sealService;
@@ -75,6 +101,23 @@ export class ZeromqServer {
         return {
           aid: patient.aid,
           cipherText: hpData.save(),
+        };
+      }),
+    };
+
+    await socket.send(JSON.stringify(data));
+  }
+
+  async decryptDiabetesResultsSeal(inputData: any, socket: zmq.Reply) {
+    let patients = inputData.patients;
+
+    let data = {
+      patients: patients.map((patient: any) => {
+        let diabetes = this.patientService.decryptDiabetesSeal(patient.diabetes);
+
+        return {
+          aid: patient.aid,
+          diabetes: diabetes,
         };
       }),
     };
