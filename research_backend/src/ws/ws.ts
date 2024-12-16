@@ -2,7 +2,7 @@ import { Config } from "src/models/config";
 import WebSocket, { WebSocketServer } from "ws";
 
 // This function sets up the WebSocket server
-export function setupWebSocketServer(config: Config) {
+export function setupWebSocketServer(config: Config, storage: string[]) {
   const wss = new WebSocketServer({ port: parseInt(process.env.WS_PORT) });
 
   wss.on("connection", (ws: WebSocket) => {
@@ -27,6 +27,17 @@ export function setupWebSocketServer(config: Config) {
       console.error("Error on WebSocket connection:", error.message);
     });
   });
+
+  const broadcast = (data: string) => {
+    wss.clients.forEach((client) => {
+      if (client.readyState === client.OPEN) {
+        client.send(data);
+      }
+    });
+  };
+
+  // Poll the shared storage and send updates to WebSocket clients
+  pollStorage(1000, storage, broadcast); // Adjust interval as needed
 
   console.log("WebSocket server running on ws://localhost:5001");
   return wss;
@@ -73,4 +84,20 @@ function handleCommand(message: string, ws: WebSocket, config: Config) {
 
 function sendMessage(message: string, ws: WebSocket) {
   ws.send(`[Server]: ${message}`);
+}
+
+function pollStorage(
+  intervalMs: number,
+  storage: string[],
+  sendToClients: (data: string) => void
+) {
+  let lastIndex = 0; // Tracks the last read index
+
+  setInterval(() => {
+    if (lastIndex < storage.length) {
+      const newEntries = storage.slice(lastIndex);
+      lastIndex = storage.length; // Update index to the latest entry
+      newEntries.forEach(sendToClients);
+    }
+  }, intervalMs);
 }

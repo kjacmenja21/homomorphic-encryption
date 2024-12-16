@@ -9,10 +9,11 @@ const HOST = process.env.HOST;
 const PORT = process.env.PORT;
 
 var config = new Config();
+const storage: string[] = [];
 
 const app = express();
-const wss = setupWebSocketServer(config);
-const zmqClient = (async () => await setupZeroMQClient(config))();
+const wss = setupWebSocketServer(config, storage);
+const zmqClient = (async () => await setupZeroMQClient(config, storage))();
 
 app.use(express.json());
 app.use("/", apiRouter);

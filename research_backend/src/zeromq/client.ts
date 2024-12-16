@@ -1,10 +1,10 @@
 import { Config } from "src/models/config";
 import { Message, Request } from "zeromq";
 
-export async function setupZeroMQClient(config: Config) {
+export async function setupZeroMQClient(config: Config, storage: string[]) {
   const ZEROMQ_PORT = process.env.ZEROMQ_PORT;
   const ZEROMQ_HOST = process.env.ZEROMQ_HOST;
-  const client = new ZeroMQClient(ZEROMQ_HOST, ZEROMQ_PORT, config);
+  const client = new ZeroMQClient(ZEROMQ_HOST, ZEROMQ_PORT, config, storage);
   await client.start();
   return client;
 }
@@ -13,13 +13,15 @@ class ZeroMQClient {
   url: string;
   config: Config;
   client: Request;
+  private storage: string[];
   private isRunning: boolean;
 
-  constructor(host: string, port: string, config: Config) {
+  constructor(host: string, port: string, config: Config, storage: string[]) {
     this.url = `tcp://${host}:${port}`;
     this.config = config;
     this.client = new Request();
     this.isRunning = true;
+    this.storage = storage;
   }
 
   start = async () => {
@@ -70,6 +72,7 @@ class ZeroMQClient {
   };
 
   handleRecieves = (result: Message) => {
-    console.log(JSON.parse(result.toString()));
+    console.log(result.toJSON().type);
+    this.storage.push("Digest");
   };
 }
