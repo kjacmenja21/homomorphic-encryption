@@ -3,124 +3,143 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Medical Information Collection</title>
+    <title>WebSocket Terminal</title>
     <style>
       body {
-        font-family: Arial, sans-serif;
-        background-color: #f4f4f9;
-        margin: 0;
-        padding: 0;
-      }
-      .container {
-        max-width: 800px;
-        margin: 50px auto;
-        background-color: white;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      }
-      h1 {
-        text-align: center;
+        background-color: #f4f4f4;
         color: #333;
+        font-family: monospace;
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
       }
-      label {
-        display: block;
-        margin-bottom: 8px;
-        font-weight: bold;
+
+      #terminal {
+        width: 80%;
+        height: 70%;
+        background: #fff;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
       }
-      input,
-      select,
-      textarea {
+
+      #header {
+        background: #e0e0e0;
+        padding: 5px 10px;
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid #ccc;
+      }
+
+      .button {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 8px;
+      }
+
+      .close {
+        background: #ff5f56;
+      }
+
+      .minimize {
+        background: #ffbd2e;
+      }
+
+      .maximize {
+        background: #27c93f;
+      }
+
+      #output {
+        flex: 1;
+        padding: 10px;
+        overflow-y: auto;
+        background: #f9f9f9;
+        font-size: 14px;
+      }
+
+      #terminal input {
         width: 100%;
         padding: 10px;
-        margin-bottom: 15px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-      }
-      input[type="submit"] {
-        background-color: #4caf50;
-        color: white;
         border: none;
-        cursor: pointer;
-      }
-      input[type="submit"]:hover {
-        background-color: #45a049;
-      }
-      .note {
+        border-top: 1px solid #ccc;
+        outline: none;
+        font-family: monospace;
         font-size: 14px;
-        color: #555;
+      }
+
+      .line {
+        margin: 0;
       }
     </style>
   </head>
   <body>
-    <div class="container">
-      <h1>Medical Information Form</h1>
-      <form action="/submit_form" method="POST">
-        <label for="full_name">Full Name</label>
-        <input type="text" id="full_name" name="full_name" required />
-
-        <label for="age">Age</label>
-        <input type="number" id="age" name="age" required />
-
-        <label for="gender">Gender</label>
-        <select id="gender" name="gender" required>
-          <option value="male">Male</option>
-          <option value="female">Female</option>
-          <option value="other">Other</option>
-          <option value="prefer_not_to_say">Prefer not to say</option>
-        </select>
-
-        <label for="email">Email Address</label>
-        <input type="email" id="email" name="email" required />
-
-        <label for="phone">Phone Number</label>
-        <input type="tel" id="phone" name="phone" />
-
-        <label for="medical_conditions">Current Medical Conditions</label>
-        <textarea
-          id="medical_conditions"
-          name="medical_conditions"
-          rows="4"
-          placeholder="List any medical conditions (if any)"
-        ></textarea>
-
-        <label for="medications">Medications</label>
-        <textarea
-          id="medications"
-          name="medications"
-          rows="4"
-          placeholder="List any medications (if any)"
-        ></textarea>
-
-        <label for="allergies">Allergies</label>
-        <textarea
-          id="allergies"
-          name="allergies"
-          rows="4"
-          placeholder="List any allergies (if any)"
-        ></textarea>
-
-        <label for="emergency_contact">Emergency Contact Name</label>
-        <input type="text" id="emergency_contact" name="emergency_contact" />
-
-        <label for="emergency_contact_phone">Emergency Contact Phone</label>
-        <input
-          type="tel"
-          id="emergency_contact_phone"
-          name="emergency_contact_phone"
-        />
-
-        <label for="consent">
-          <input type="checkbox" id="consent" name="consent" required />
-          I consent to the collection and processing of my medical information.
-        </label>
-
-        <input type="submit" value="Submit" />
-      </form>
-      <p class="note">
-        *All information collected will be kept confidential and used only for
-        medical purposes. Please make sure the details are accurate.
-      </p>
+    <div id="terminal">
+      <div id="header">
+        <div class="button close"></div>
+        <div class="button minimize"></div>
+        <div class="button maximize"></div>
+      </div>
+      <div id="output"></div>
+      <input type="text" id="input" autofocus placeholder="Type a command..." />
     </div>
+
+    <script>
+      // Injected host and port
+      const HOST = __HOST__;
+      const PORT = __PORT__;
+
+      const WEBSOCKET = `ws://${HOST}:${PORT}`;
+
+      console.log(WEBSOCKET);
+
+      // WebSocket setup
+      const socket = new WebSocket(WEBSOCKET);
+      const outputDiv = document.getElementById("output");
+      const inputField = document.getElementById("input");
+
+      // Add message to terminal output
+      function appendMessage(message) {
+        const line = document.createElement("div");
+        line.className = "line";
+        line.textContent = message;
+        outputDiv.appendChild(line);
+        outputDiv.scrollTop = outputDiv.scrollHeight; // Scroll to bottom
+      }
+
+      // WebSocket events
+      socket.addEventListener("open", () => {
+        appendMessage("[Connected to server]");
+      });
+
+      socket.addEventListener("message", (event) => {
+        appendMessage(event.data);
+      });
+
+      socket.addEventListener("close", () => {
+        appendMessage("[Disconnected from server]");
+      });
+
+      socket.addEventListener("error", (error) => {
+        appendMessage(`[Error: ${error.message}]`);
+      });
+
+      // Handle user input
+      inputField.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          const command = inputField.value.trim();
+          if (command) {
+            appendMessage(`> ${command}`); // Show the user input
+            socket.send(command); // Send command to WebSocket server
+            inputField.value = ""; // Clear input field
+          }
+        }
+      });
+    </script>
   </body>
 </html>
