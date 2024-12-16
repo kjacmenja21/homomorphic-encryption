@@ -6,25 +6,25 @@ export function setupWebSocketServer(config: Config, storage: string[]) {
   const wss = new WebSocketServer({ port: parseInt(process.env.WS_PORT) });
 
   wss.on("connection", (ws: WebSocket) => {
-    console.log("Client connected");
+    console.log("[WS]Client connected");
 
     // Send a welcome message to the client
     ws.send("Connection established. Use `commands` to see comannds");
 
     // Handle incoming messages
     ws.on("message", (message: WebSocket.Data) => {
-      console.log(`Received message: ${message}`);
+      console.log(`[WS]Received message: "${message}", processing...`);
       handleCommand(message.toString(), ws, config);
     });
 
     // Handle disconnection
     ws.on("close", () => {
-      console.log("Client disconnected");
+      console.log("[WS]Client disconnected");
     });
 
     // Handle WebSocket errors
     ws.on("error", (error: Error) => {
-      console.error("Error on WebSocket connection:", error.message);
+      console.error("[WS]Error on WebSocket connection:", error.message);
     });
   });
 
@@ -45,7 +45,7 @@ export function setupWebSocketServer(config: Config, storage: string[]) {
   // Poll the shared storage and send updates to WebSocket clients
   pollStorage(1000, storage, broadcast); // Adjust interval as needed
 
-  console.log("WebSocket server running on ws://localhost:5001");
+  console.log("[WS]WebSocket server running on ws://localhost:5001");
   return wss;
 }
 
@@ -86,9 +86,9 @@ function handleCommand(message: string, ws: WebSocket, config: Config) {
     case "request_type":
       // Example: request_type <get-patients-data-paillier | get-patients-data-seal>
       if (params.length === 1) {
-        const type = params[0];
-        if (type in RequestType) {
-          config.request_type = params[0] as RequestType;
+        const type = params[0] as RequestType;
+        if (Object.values(RequestType).includes(type)) {
+          config.request_type = type;
           ws.send(`Request type set to: ${config.request_type}`);
         } else {
           ws.send("Invalid type given.");

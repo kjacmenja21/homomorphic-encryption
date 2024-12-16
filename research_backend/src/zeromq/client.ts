@@ -73,7 +73,7 @@ class ZeroMQClient {
       );
       this.handleReceives(result);
     } catch (err) {
-      console.error("Error sending request:", err);
+      this.storage.push("Error sending request:", err);
     }
 
     const intervalMs = this.config.request_interval_seconds * 1000;
@@ -83,12 +83,14 @@ class ZeroMQClient {
   handleReceives = async (result: Message) => {
     let data = JSON.parse(result.toString());
     let type = data.type;
-
+    console.log("Mode: " + type);
     switch (type) {
       case "patients-data-paillier":
+        this.storage.push("Starting Paillier process...");
         this.handlePatientsDataPaillier(data);
         break;
       case "patients-data-seal":
+        this.storage.push("Starting Seal process...");
         this.handlePatientsDataSeal(data);
         break;
     }
@@ -98,6 +100,7 @@ class ZeroMQClient {
     let publicKey = this.paillierService.decodePublicKey(data.publicKey);
 
     let patients = data.patients.map((patient: any) => {
+      JSON.stringify(patient);
       let cholesterol = BigInt(patient.cholesterol);
       let bloodPressure = BigInt(patient.bloodPressure);
 
@@ -128,6 +131,7 @@ class ZeroMQClient {
     sealService.initHelpers();
 
     let patients = data.patients.map((patient: any) => {
+      this.storage.push(JSON.stringify(patient));
       let cholesterol = sealService.createCipherText();
       let bloodPressure = sealService.createCipherText();
       let diabetes = sealService.createCipherText();
@@ -165,6 +169,6 @@ class ZeroMQClient {
 
   async handleDiabetes(data: any) {
     data = JSON.parse(data.toString());
-    console.log(data);
+    console.log("Patient information: " + JSON.stringify(data));
   }
 }
