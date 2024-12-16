@@ -1,5 +1,7 @@
 import { Config } from "src/models/config";
 import { Message, Request } from "zeromq";
+import { PaillierService } from "../services/paillierService";
+import { SealService } from "../services/sealService";
 
 export async function setupZeroMQClient(config: Config, storage: string[]) {
   const ZEROMQ_PORT = process.env.ZEROMQ_PORT;
@@ -13,6 +15,8 @@ class ZeroMQClient {
   url: string;
   config: Config;
   client: Request;
+  paillierService: PaillierService;
+  sealService: SealService;
   private storage: string[];
   private isRunning: boolean;
 
@@ -20,11 +24,15 @@ class ZeroMQClient {
     this.url = `tcp://${host}:${port}`;
     this.config = config;
     this.client = new Request();
+    this.paillierService = new PaillierService();
+    this.sealService = new SealService();
     this.isRunning = true;
     this.storage = storage;
   }
 
   start = async () => {
+    await this.sealService.init();
+
     try {
       this.connect().then(() => {
         console.log("Client connected to server.");
@@ -48,7 +56,7 @@ class ZeroMQClient {
   };
 
   send = async (message: string) => {
-    console.log(`Sending request: ${message}`);
+    //console.log(`Sending request: ${message}`);
     await this.client.send(message);
 
     const [reply] = await this.client.receive();
@@ -72,9 +80,91 @@ class ZeroMQClient {
     setTimeout(this.scheduleRequests, intervalMs);
   };
 
-  handleReceives = (result: Message) => {
-    const resultString = result.toString();
-    console.log(`Received result from server`);
-    this.storage.push(resultString);
+  handleReceives = async (result: Message) => {
+    let data = JSON.parse(result.toString());
+    let type = data.type;
+
+    switch (type) {
+      case "patients-data-paillier":
+        this.handlePatientsDataPaillier(data);
+        break;
+      case "patients-data-seal":
+        this.handlePatientsDataSeal(data);
+        break;
+    }
   };
+
+  async handlePatientsDataPaillier(data: any) {
+    let publicKey = this.paillierService.decodePublicKey(data.publicKey);
+
+    let patients = data.patients.map((patient: any) => {
+      let cholesterol = BigInt(patient.cholesterol);
+      let bloodPressure = BigInt(patient.bloodPressure);
+
+      // D = 514 * C + 12 * BP
+      let a: bigint = publicKey.multiply(cholesterol, 514);
+      let b: bigint = publicKey.multiply(bloodPressure, 12);
+      let diabetes = publicKey.addition(a, b);
+
+      return {
+        aid: patient.aid,
+        diabetes: diabetes.toString(),
+      };
+    });
+
+    let result = {
+      type: "decrypt-diabetes-results-paillier",
+      patients: patients,
+    };
+
+    let diabetesData = await this.send(JSON.stringify(result));
+    this.handleDiabetes(diabetesData);
+  }
+
+  async handlePatientsDataSeal(data: any) {
+    let sealService = this.sealService;
+
+    sealService.decodePublicKey(data.publicKey);
+    sealService.initHelpers();
+
+    let patients = data.patients.map((patient: any) => {
+      let cholesterol = sealService.createCipherText();
+      let bloodPressure = sealService.createCipherText();
+      let diabetes = sealService.createCipherText();
+
+      cholesterol.load(sealService.context, patient.cholesterol);
+      bloodPressure.load(sealService.context, patient.bloodPressure);
+
+      // D = 514 * C + 12 * BP
+
+      let k1 = sealService.encodeNumber(514);
+      let k2 = sealService.encodeNumber(12);
+
+      let a = sealService.createCipherText();
+      let b = sealService.createCipherText();
+
+      sealService.evaluator.multiply(cholesterol, k1, a);
+      sealService.evaluator.multiply(bloodPressure, k2, b);
+
+      sealService.evaluator.add(a, b, diabetes);
+
+      return {
+        aid: patient.aid,
+        diabetes: diabetes.save(),
+      };
+    });
+
+    let result = {
+      type: "decrypt-diabetes-results-seal",
+      patients: patients,
+    };
+
+    let diabetesData = await this.send(JSON.stringify(result));
+    this.handleDiabetes(diabetesData);
+  }
+
+  async handleDiabetes(data: any) {
+    data = JSON.parse(data.toString());
+    console.log(data);
+  }
 }

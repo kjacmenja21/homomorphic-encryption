@@ -17,13 +17,18 @@ export class HealthData {
   }
 
   encryptSeal(sealService: SealService) {
-    let array = Int32Array.from([this.cholesterol, this.bloodPressure]);
+    let cholesterolArray = Int32Array.from([this.cholesterol]);
+    let bloodPressureArray = Int32Array.from([this.bloodPressure]);
 
-    let plainText = sealService.encoder.encode(array);
-    let cipherText = sealService.encryptor.encrypt(plainText);
+    let cholesterolPlainText = sealService.encoder.encode(cholesterolArray);
+    let bloodPressurePlainText = sealService.encoder.encode(bloodPressureArray);
+
+    let cholesterolCipherText = sealService.encryptor.encrypt(cholesterolPlainText);
+    let bloodPressureCipherText = sealService.encryptor.encrypt(bloodPressurePlainText);
 
     let result = new EncryptedHealthDataSeal();
-    result.cipherText = cipherText;
+    result.cholesterol = cholesterolCipherText;
+    result.bloodPressure = bloodPressureCipherText;
 
     return result;
   }
@@ -65,29 +70,42 @@ export class EncryptedHealthDataPaillier {
 }
 
 export class EncryptedHealthDataSeal {
-  cipherText: any;
+  cholesterol: any;
+  bloodPressure: any;
 
   decrypt(sealService: SealService) {
-    let decryptedPlainText = sealService.decryptor.decrypt(this.cipherText);
-    let decodedArray = sealService.encoder.decode(decryptedPlainText);
+    let cholesterolDecryptedPlainText = sealService.decryptor.decrypt(this.cholesterol);
+    let bloodPressureDecryptedPlainText = sealService.decryptor.decrypt(this.bloodPressure);
+
+    let cholesterolDecodedArray = sealService.encoder.decode(cholesterolDecryptedPlainText);
+    let bloodPressureDecodedArray = sealService.encoder.decode(bloodPressureDecryptedPlainText);
 
     let result = new HealthData();
-    result.cholesterol = decodedArray[0];
-    result.bloodPressure = decodedArray[1];
+    result.cholesterol = cholesterolDecodedArray[0];
+    result.bloodPressure = bloodPressureDecodedArray[0];
 
     return result;
   }
 
-  save() {
-    return this.cipherText.save();
+  toJson() {
+    return JSON.stringify({
+      cholesterol: this.cholesterol.save(),
+      bloodPressure: this.bloodPressure.save(),
+    });
   }
 
-  static load(data: string, sealService: SealService) {
-    let cipherText = sealService.createCipherText();
-    cipherText.load(sealService.context, data);
+  static fromJson(data: string, sealService: SealService) {
+    let dataJson: any = JSON.parse(data);
+
+    let cholesterolCipherText = sealService.createCipherText();
+    let bloodPressureCipherText = sealService.createCipherText();
+
+    cholesterolCipherText.load(sealService.context, dataJson["cholesterol"]);
+    bloodPressureCipherText.load(sealService.context, dataJson["bloodPressure"]);
 
     let hpData = new EncryptedHealthDataSeal();
-    hpData.cipherText = cipherText;
+    hpData.cholesterol = cholesterolCipherText;
+    hpData.bloodPressure = bloodPressureCipherText;
 
     return hpData;
   }
