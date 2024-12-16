@@ -150,7 +150,9 @@
           retries++;
           setTimeout(connect, retryDelay);
           appendMessage(
-            `[Retrying in ${retryDelay / 1000} seconds (attempt ${retries})]`
+            `[Retrying in ${Math.floor(
+              retryDelay / 1000
+            )} seconds (attempt ${retries})]`
           );
         } else {
           retryDelay += 60000; // Increment retry delay by 1 minute
