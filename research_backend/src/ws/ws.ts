@@ -1,5 +1,5 @@
-import { Config } from "src/models/config";
 import WebSocket, { WebSocketServer } from "ws";
+import { Config, RequestType } from "../models/config";
 
 // This function sets up the WebSocket server
 export function setupWebSocketServer(config: Config, storage: string[]) {
@@ -62,6 +62,7 @@ function handleCommand(message: string, ws: WebSocket, config: Config) {
       const commands = [
         "send_message <param1> <param2>...",
         "request_interval <seconds>",
+        "request_type <get-patients-data-paillier | get-patients-data-seal>",
       ];
       // Example: send_message <message>
       sendMessage(commands.map((str) => `"${str}"`).join(" "), ws);
@@ -82,6 +83,18 @@ function handleCommand(message: string, ws: WebSocket, config: Config) {
       }
       break;
 
+    case "request_type":
+      // Example: request_type <get-patients-data-paillier | get-patients-data-seal>
+      if (params.length === 1) {
+        const type = params[0];
+        if (type in RequestType) {
+          config.request_type = params[0] as RequestType;
+          ws.send(`Request type set to: ${config.request_type}`);
+        } else {
+          ws.send("Invalid type given.");
+        }
+      }
+      break;
     default:
       ws.send(`Unknown command: ${command}`);
       break;

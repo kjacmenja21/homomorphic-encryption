@@ -1,4 +1,4 @@
-enum RequestType {
+export enum RequestType {
   PAILLIER = "get-patients-data-paillier",
   SEAL = "get-patients-data-seal",
 }
