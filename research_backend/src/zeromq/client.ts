@@ -1,5 +1,5 @@
 import { Config } from "src/models/config";
-import { Request } from "zeromq";
+import { Message, Request } from "zeromq";
 
 export async function setupZeroMQClient(config: Config) {
   const ZEROMQ_PORT = process.env.ZEROMQ_PORT;
@@ -25,7 +25,10 @@ class ZeroMQClient {
         console.log("Client connected to server.");
 
         setInterval(async () => {
-          await this.send("Hello, Server!");
+          const result = await this.send(
+            JSON.stringify({ type: this.config.request_type })
+          );
+          this.handleRecieves(result);
         }, this.config.request_interval_seconds * 1000);
       });
     } catch (err) {
@@ -50,12 +53,10 @@ class ZeroMQClient {
     await this.client.send(message);
 
     const [reply] = await this.client.receive();
-    console.log(`Received reply: ${reply.toString()}`);
+    return reply;
   };
 
-  startPeriodicRequests() {
-    setInterval(async () => {
-      await this.send("Hello, Server!");
-    }, this.config.request_interval_seconds);
-  }
+  handleRecieves = (result: Message) => {
+    console.log(result.toJSON().type);
+  };
 }
