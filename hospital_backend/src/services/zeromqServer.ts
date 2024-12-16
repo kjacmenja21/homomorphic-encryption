@@ -93,8 +93,12 @@ export class ZeromqServer {
   async getPatientsDataSeal(inputData: any) {
     let patients = await this.patientService.getAllPatients();
 
+    let sealService = this.patientService.sealService;
+
     let data = {
       type: "patients-data-seal",
+
+      publicKey: sealService.encodePublicKey(),
 
       patients: patients.map((patient) => {
         let hpData = patient.healthDataSeal;

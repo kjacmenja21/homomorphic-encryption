@@ -4,7 +4,10 @@ export class SealService {
   private seal: any;
   context: any;
 
+  private publicKey: any;
+
   encoder: any;
+  encryptor: any;
   evaluator: any;
 
   async init() {
@@ -34,10 +37,24 @@ export class SealService {
 
   initHelpers() {
     this.encoder = this.seal.BatchEncoder(this.context);
+    this.encryptor = this.seal.Encryptor(this.context, this.publicKey);
     this.evaluator = this.seal.Evaluator(this.context);
+  }
+
+  decodePublicKey(publicKey: string) {
+    this.publicKey = this.seal.PublicKey();
+    this.publicKey.load(this.context, publicKey);
   }
 
   createCipherText() {
     return this.seal.CipherText();
+  }
+
+  encodeNumber(a: number) {
+    let array = Int32Array.from([a]);
+    let plainText = this.encoder.encode(array);
+    let cipherText = this.encryptor.encrypt(plainText);
+
+    return cipherText;
   }
 }

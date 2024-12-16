@@ -29,7 +29,6 @@ class ZeroMQClient {
 
   start = async () => {
     await this.sealService.init();
-    this.sealService.initHelpers();
 
     try {
       this.connect().then(() => {
@@ -86,7 +85,10 @@ class ZeroMQClient {
       let cholesterol = BigInt(patient.cholesterol);
       let bloodPressure = BigInt(patient.bloodPressure);
 
-      let diabetes = publicKey.addition(cholesterol, bloodPressure);
+      // D = 514 * C + 12 * BP
+      let a: bigint = publicKey.multiply(cholesterol, 514);
+      let b: bigint = publicKey.multiply(bloodPressure, 12);
+      let diabetes = publicKey.addition(a, b);
 
       return {
         aid: patient.aid,
@@ -106,6 +108,9 @@ class ZeroMQClient {
   async handlePatientsDataSeal(data: any) {
     let sealService = this.sealService;
 
+    sealService.decodePublicKey(data.publicKey);
+    sealService.initHelpers();
+
     let patients = data.patients.map((patient: any) => {
       let cholesterol = sealService.createCipherText();
       let bloodPressure = sealService.createCipherText();
@@ -114,7 +119,18 @@ class ZeroMQClient {
       cholesterol.load(sealService.context, patient.cholesterol);
       bloodPressure.load(sealService.context, patient.bloodPressure);
 
-      sealService.evaluator.add(cholesterol, bloodPressure, diabetes);
+      // D = 514 * C + 12 * BP
+
+      let k1 = sealService.encodeNumber(514);
+      let k2 = sealService.encodeNumber(12);
+
+      let a = sealService.createCipherText();
+      let b = sealService.createCipherText();
+
+      sealService.evaluator.multiply(cholesterol, k1, a);
+      sealService.evaluator.multiply(bloodPressure, k2, b);
+
+      sealService.evaluator.add(a, b, diabetes);
 
       return {
         aid: patient.aid,
