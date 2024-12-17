@@ -105,7 +105,7 @@
       // Add message to terminal output with truncation
       // Add message to terminal output with truncation for non-[Server] messages
       function appendMessage(message) {
-        const MAX_LENGTH = 200; // Adjust as needed for your terminal width
+        const MAX_LENGTH = 150; // Adjust as needed for your terminal width
 
         // Prevent truncation for messages starting with [Server]
         const shouldTruncate = !message.startsWith("[Server]");
@@ -117,8 +117,18 @@
         const line = document.createElement("div");
         line.className = "line";
         line.textContent = truncatedMessage;
+
+        // Check scroll position
+        const isScrolledToBottom =
+          outputDiv.scrollHeight - outputDiv.clientHeight <=
+          outputDiv.scrollTop + 1;
+
         outputDiv.appendChild(line);
-        outputDiv.scrollTop = outputDiv.scrollHeight; // Scroll to bottom
+
+        // Only scroll to bottom if the user was already at the bottom
+        if (isScrolledToBottom) {
+          outputDiv.scrollTop = outputDiv.scrollHeight;
+        }
       }
 
       // Connect to WebSocket
