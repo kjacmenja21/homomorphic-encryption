@@ -21,9 +21,6 @@ export class ZeromqServer {
       //curveServer: true,
     });
 
-    //console.log(this.config.public_key);
-    //this.socket.curvePublicKey = this.config.public_key;
-
     await this.socket.bind("tcp://localhost:" + this.config.zmqPort);
 
     for await (let [msg] of this.socket) {
@@ -87,9 +84,7 @@ export class ZeromqServer {
 
     let data = {
       patients: patients.map((patient: any) => {
-        let diabetes = this.patientService.decryptDiabetesPaillier(
-          patient.diabetes
-        );
+        let diabetes = this.patientService.decryptDiabetesPaillier(patient.diabetes);
 
         return {
           aid: patient.aid,
@@ -130,9 +125,7 @@ export class ZeromqServer {
 
     let data = {
       patients: patients.map((patient: any) => {
-        let diabetes = this.patientService.decryptDiabetesSeal(
-          patient.diabetes
-        );
+        let diabetes = this.patientService.decryptDiabetesSeal(patient.diabetes);
 
         return {
           aid: patient.aid,
