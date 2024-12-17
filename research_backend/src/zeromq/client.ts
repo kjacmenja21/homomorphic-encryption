@@ -90,12 +90,19 @@ class ZeroMQClient {
     console.log("Mode: " + type);
     switch (type) {
       case "patients-data-paillier":
+        let paillier_time = "[Measure] Paillier processing time";
+
         this.storage.push("Starting Paillier process...");
+        console.time(paillier_time);
         this.handlePatientsDataPaillier(data);
+        console.timeEnd(paillier_time);
         break;
       case "patients-data-seal":
+        let seal_time = "[Measure] Seal processing time";
         this.storage.push("Starting Seal process...");
+        console.time(seal_time);
         this.handlePatientsDataSeal(data);
+        console.timeEnd(seal_time);
         break;
     }
   };
@@ -136,6 +143,7 @@ class ZeroMQClient {
 
     let patients = data.patients.map((patient: any) => {
       this.storage.push(JSON.stringify(patient));
+
       let cholesterol = sealService.createCipherText();
       let bloodPressure = sealService.createCipherText();
       let diabetes = sealService.createCipherText();
@@ -174,7 +182,7 @@ class ZeroMQClient {
   async handleDiabetes(data: any) {
     data = JSON.parse(data.toString());
     let string = "Patient information: " + JSON.stringify(data);
-    console.log(string);
+    //console.log(string);
     this.storage.push(string);
   }
 }
