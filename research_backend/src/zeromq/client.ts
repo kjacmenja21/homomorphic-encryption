@@ -173,7 +173,8 @@ class ZeroMQClient {
 
   async handleDiabetes(data: any) {
     data = JSON.parse(data.toString());
-    console.log("Patient information: " + JSON.stringify(data));
-    this.storage.push(data);
+    let string = "Patient information: " + JSON.stringify(data);
+    console.log(string);
+    this.storage.push(string);
   }
 }
