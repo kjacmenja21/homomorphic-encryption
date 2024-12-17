@@ -104,7 +104,7 @@ class ZeroMQClient {
     let publicKey = this.paillierService.decodePublicKey(data.publicKey);
 
     let patients = data.patients.map((patient: any) => {
-      JSON.stringify(patient);
+      this.storage.push(JSON.stringify(patient));
       let cholesterol = BigInt(patient.cholesterol);
       let bloodPressure = BigInt(patient.bloodPressure);
 
@@ -174,5 +174,6 @@ class ZeroMQClient {
   async handleDiabetes(data: any) {
     data = JSON.parse(data.toString());
     console.log("Patient information: " + JSON.stringify(data));
+    this.storage.push(data);
   }
 }
